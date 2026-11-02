@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;background:#040A07;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+</style></head><body><canvas id="c"></canvas><script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+c.width=525;c.height=332;
+let target=null,born=0,best=999,last=0,score=0,reaction=[];
+function spawn(){
+ const r=22+Math.random()*10;
+ target={x:60+r+Math.random()*(c.width-120-2*r),y:70+r+Math.random()*(c.height-150-2*r),r,
+   wait:280+Math.random()*700};
+ born=performance.now()+target.wait;
+}
+spawn();
+function loop(t){
+ x.fillStyle='#040A07';x.fillRect(0,0,c.width,c.height);
+ x.strokeStyle='rgba(127,227,176,.07)';
+ for(let i=0;i<c.width;i+=42){x.beginPath();x.moveTo(i,0);x.lineTo(i,c.height);x.stroke();}
+ if(target){
+  const ready=t>=born;
+  x.fillStyle=ready?'#7FE3B0':'rgba(127,227,176,.18)';
+  x.beginPath();x.arc(target.x,target.y,target.r*(ready?1:0.82),0,7);x.fill();
+  if(ready){x.strokeStyle='rgba(127,227,176,.5)';x.lineWidth=2;
+   x.beginPath();x.arc(target.x,target.y,target.r+6+Math.sin(t/140)*3,0,7);x.stroke();
+   // 机器手：延迟 210ms 命中
+   if(t-born>210){
+    const ms=Math.round(t-born);
+    if(ms<800){reaction.push(ms);if(reaction.length>6)reaction.shift();score++;}
+    spawn();
+   }
+  }
+ }
+ x.font='bold 14px Consolas';x.fillStyle='rgba(127,227,176,.8)';
+ const avg=reaction.length?Math.round(reaction.reduce((a,b)=>a+b,0)/reaction.length):0;
+ x.fillText('HIT '+score,10,22);
+ x.fillText(avg?('REACTION '+avg+'ms'):'REACTION --',c.width-190,22);
+ requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script></body></html>

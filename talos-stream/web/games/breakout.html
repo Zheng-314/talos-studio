@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;background:#040A07;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+</style></head><body><canvas id="c"></canvas><script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+c.width=525;c.height=332;
+const COLS=9,ROWS=6,BW=c.width/COLS,BH=17,TOP=42;
+let bricks=[],ball={x:260,y:220,vx:3.2,vy:-3.6},paddle={x:230,w:96},score=0,life=3;
+function reset(){
+ bricks=[];
+ for(let r=0;r<ROWS;r++)for(let k=0;k<COLS;k++)bricks.push({x:k*BW,y:TOP+r*BH,w:BW-3,h:BH-3,alive:1,row:r});
+ ball={x:c.width/2,y:250,vx:(Math.random()>.5?3.2:-3.2),vy:-3.6};paddle.x=c.width/2-48;
+}
+reset();
+function loop(){
+ x.fillStyle='#040A07';x.fillRect(0,0,c.width,c.height);
+ bricks.forEach(b=>{if(!b.alive)return;
+  const g=['#7FE3B0','#5ED2A0','#3FBF88','#2AA673','#229663','#1B7F55'][b.row]||'#1B7F55';
+  x.fillStyle=g;x.globalAlpha=.9;x.beginPath();x.roundRect(b.x,b.y,b.w,b.h,3);x.fill();x.globalAlpha=1;});
+ // 自动挡板：追球
+ const target=ball.x-paddle.w/2;
+ paddle.x+=Math.max(-7,Math.min(7,target-paddle.x));
+ paddle.x=Math.max(0,Math.min(c.width-paddle.w,paddle.x));
+ x.fillStyle='#7FE3B0';x.beginPath();x.roundRect(paddle.x,c.height-24,paddle.w,11,5);x.fill();
+ ball.x+=ball.vx;ball.y+=ball.vy;
+ if(ball.x<6||ball.x>c.width-6)ball.vx*=-1;
+ if(ball.y<6)ball.vy*=-1;
+ if(ball.y>c.height-26&&ball.y<c.height-12&&ball.x>paddle.x&&ball.x<paddle.x+paddle.w){
+  ball.vy=-Math.abs(ball.vy);ball.vx+= (ball.x-(paddle.x+paddle.w/2))*0.05;}
+ if(ball.y>c.height){life--;score=Math.max(0,score-1);
+  if(life<0){life=3;score=0;reset();}else{ball={x:c.width/2,y:250,vx:3.2,vy:-3.6};}}
+ bricks.forEach(b=>{
+  if(!b.alive)return;
+  if(ball.x>b.x&&ball.x<b.x+b.w&&ball.y>b.y&&ball.y<b.y+b.h){
+   b.alive=0;score++;ball.vy*=-1;}
+ });
+ x.fillStyle='#7FE3B0';x.beginPath();x.arc(ball.x,ball.y,6,0,7);x.fill();
+ x.font='bold 14px Consolas';x.fillStyle='rgba(127,227,176,.8)';
+ x.fillText('SCORE '+score,10,22);x.fillText('♥'.repeat(Math.max(0,life)),c.width-60,22);
+ if(bricks.every(b=>!b.alive)){x.fillStyle='#FFB454';x.font='bold 18px Consolas';
+  x.fillText('CLEAR',c.width/2-30,c.height/2);setTimeout(reset,1200);}
+ requestAnimationFrame(loop);
+}
+loop();
+</script></body></html>

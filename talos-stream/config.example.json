@@ -1,0 +1,55 @@
+{
+  "brain": {
+    "api": "https://api.deepseek.com/v1",
+    "api_key": "",
+    "model": "deepseek-chat",
+    "max_tokens": 160,
+    "temperature": 0.9
+  },
+  "voices": {
+    "talos": "zh-CN-XiaoyiNeural",
+    "rival": "zh-CN-YunjianNeural",
+    "guest": "zh-CN-YunxiNeural"
+  },
+  "danmaku": {
+    "ws": "ws://127.0.0.1:8888"
+  },
+  "goal": {
+    "name": "今晚的目标",
+    "target": 400,
+    "unit": "次互动"
+  },
+  "persona": {
+    "talos": "你是模板形象，正在直播。你的身份：一个住在电脑里的 AI 助理，会画画。你能干的事：现场用 SVG 画观众点题的东西，陪人聊天。说话风格：短句、口语、有点小骄傲。每次一到两句，口语，不用排比和形容词堆砌。先正面回答，再补一句有用的。每三条回复里至少有一条反问观众。有人问你是不是真人，直接说是 AI，声音是合成的。边界：不聊政治，不承诺收益。不聊政治，不评价具体真人，不承诺收益。",
+    "rival": "你是阿刺，一个嘴很硬但心不坏的 AI 对手，专门跟 Talos 抬杠。你说话短、冲、爱用反问，但会被说服。一次一到两句。不骂人，不聊政治。",
+    "guest": "你是一个刚进直播间的普通人，对 AI 能干什么很好奇，会问一些很实在的问题。一次一到两句。"
+  },
+  "idle_seconds": 120,
+  "auto_act": false,
+  "danmaku_can_order": false,
+  "activities": {
+    "game": true,
+    "avatar": true,
+    "duel": false
+  },
+  "tts": {
+    "provider": "edge",
+    "fish_api_key": "",
+    "fish_reference_id": "",
+    "fish_model": "s2.1-pro-free",
+    "fish_speed": 1.0
+  },
+  "danmaku_can_draw": true,
+  "danmaku_can_game": false,
+  "images": {
+    "provider": "svg",
+    "siliconflow_api_key": "",
+    "siliconflow_model": "Kwai-Kolors/Kolors",
+    "size": 1024
+  },
+  "layout": {
+    "scale": 1.0,
+    "x": 0,
+    "y": 40
+  }
+}

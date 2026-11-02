@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>Talos 直播间</title>
+<style>
+:root{
+  --bg:#060A08; --panel:#0C1512; --panel2:#111E19;
+  --line:rgba(127,224,180,.14); --mint:#7FE0B4; --em:#19A26A; --jade:#0E7A4E;
+  --amber:#FFB454; --dim:#7C948A; --ink:#ECF6F0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}
+body{display:grid;place-items:center;font-family:"Microsoft YaHei","PingFang SC",sans-serif}
+#stage{position:absolute;width:1080px;height:1920px;overflow:hidden;background:var(--bg);
+  transform-origin:center center;isolation:isolate}
+
+/* 顶条 */
+.top{position:absolute;left:0;right:0;top:0;height:56px;z-index:30;display:flex;align-items:center;
+  justify-content:space-between;padding:0 30px;background:rgba(6,10,8,.92);
+  border-bottom:1px solid rgba(127,224,180,.10)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:30px;height:30px;border-radius:8px}
+.brand b{font:700 23px/1 "Segoe UI","PingFang SC","Microsoft YaHei";letter-spacing:-.4px;color:var(--ink)}
+.brand i{font-style:normal;color:var(--dim);font-size:13px;letter-spacing:2px;margin-left:8px}
+.tr{display:flex;align-items:center;gap:10px}
+.pill{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:14px;
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.pill.live{background:rgba(25,162,106,.14);border-color:rgba(25,162,106,.42);color:var(--mint)}
+.pill.live em{width:7px;height:7px;border-radius:50%;background:var(--em);box-shadow:0 0 8px var(--em);
+  animation:blink 1.6s infinite;font-style:normal}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.clock{font-family:ui-monospace,Consolas,monospace;color:var(--dim);font-size:15px}
+
+/* HUD */
+.hud{position:absolute;left:22px;right:22px;top:70px;height:286px;z-index:20;
+  border-radius:18px;border:1px solid rgba(127,224,180,.18);
+  background:
+    radial-gradient(560px 200px at 12% 0%,rgba(25,162,106,.20),transparent 70%),
+    linear-gradient(160deg,#0F1D17,#0A120F);
+  box-shadow:0 18px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(127,224,180,.10);
+  padding:18px 22px;display:flex;flex-direction:column;gap:12px}
+.hud .r1{display:flex;align-items:flex-end;justify-content:space-between}
+.hud .lab{font-size:15px;color:var(--dim);letter-spacing:2px}
+.hud .big{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.hud .big b{font:700 56px/1 ui-monospace,Consolas,monospace;color:var(--ink);letter-spacing:-2px}
+.hud .big span{font-size:20px;color:var(--dim);font-family:ui-monospace,Consolas,monospace}
+.hud .st{display:flex;gap:8px}
+.hud .st .s{padding:7px 14px;border-radius:10px;font-size:14px;border:1px solid var(--line);color:var(--dim)}
+.hud .st .s.on{background:rgba(25,162,106,.18);border-color:rgba(47,188,130,.6);color:#BFF3DA}
+.bar{height:8px;border-radius:5px;background:rgba(127,224,180,.10);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--em),var(--mint));transition:width .6s}
+.hud .rule{font-size:15px;color:#93ADA1;letter-spacing:.3px}
+.hud .rule b{color:var(--mint);font-weight:600}
+.hud .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:auto}
+.hud .stat{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(127,224,180,.10)}
+.hud .stat .k{font-size:12px;color:#5F7768;letter-spacing:1px}
+.hud .stat .v{margin-top:3px;font:600 21px/1 ui-monospace,Consolas,monospace;color:var(--ink)}
+.hud .stat.amber .v{color:var(--amber)}
+
+/* 字幕区 */
+.talk{position:absolute;left:22px;right:22px;top:368px;height:150px;z-index:20;
+  border-radius:16px;padding:16px 22px;display:flex;flex-direction:column;justify-content:center;
+  background:linear-gradient(160deg,rgba(16,30,24,.96),rgba(10,18,15,.96));
+  border:1px solid rgba(127,224,180,.22);box-shadow:0 14px 34px rgba(0,0,0,.45);
+  opacity:1;transform:none;transition:.22s}
+.talk.idle .a{color:#5E776B;font-size:26px}
+.talk .q{font-size:19px;color:#86A092;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.talk .q b{color:var(--mint);font-weight:600}
+.talk .a{font-size:31px;line-height:1.4;color:var(--ink);letter-spacing:.3px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.talk .a u{text-decoration:none;color:var(--mint);font-size:24px;margin-right:8px;font-weight:600}
+
+/* 舞台 */
+.scene{position:absolute;left:0;top:528px;width:1080px;height:1392px;overflow:hidden}
+.wall{position:absolute;inset:0;
+  background:
+    radial-gradient(760px 620px at 68% 54%,rgba(25,162,106,.26),transparent 70%),
+    radial-gradient(520px 460px at 12% 74%,rgba(127,224,180,.10),transparent 72%),
+    linear-gradient(180deg,#050806,#0A1310 72%,#0B1813)}
+.wall::after{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(127,224,180,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(127,224,180,.045) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(620px 620px at 60% 46%,#000,transparent 78%)}
+
+.host{position:absolute;
+  right:calc(-158px + var(--host-x,0px));
+  bottom:calc(96px + var(--host-y,0px));
+  width:calc(880px * var(--host-scale,1));
+  z-index:6;pointer-events:none;transition:right .2s,bottom .2s,width .2s}
+.host .fig{position:relative;width:100%;animation:breathe 5.4s ease-in-out infinite;transform-origin:50% 100%}
+.host .zoom{width:100%;animation:zoom 26s ease-in-out infinite;transform-origin:50% 62%;
+  -webkit-mask-image:linear-gradient(to bottom,#000 78%,transparent 99%);
+  mask-image:linear-gradient(to bottom,#000 78%,transparent 99%)}
+@keyframes zoom{0%,100%{transform:scale(1)}50%{transform:scale(1.018)}}
+.host img{position:absolute;left:0;top:0;width:100%;display:block;transition:opacity .18s ease}
+.host img.base{position:relative}
+@keyframes breathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.004)}}
+.ground{position:absolute;right:60px;bottom:84px;width:480px;height:50px;z-index:5;
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent 70%);
+  filter:blur(10px);pointer-events:none}
+.aura{position:absolute;right:120px;bottom:200px;width:560px;height:560px;border-radius:50%;
+  background:radial-gradient(circle,rgba(25,162,106,.22),transparent 62%);
+  filter:blur(20px);z-index:5;pointer-events:none;transition:opacity .4s}
+.speaking .aura{animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.95;transform:scale(1.06)}}
+
+/* 终端窗口 */
+.term{position:absolute;left:22px;bottom:430px;width:492px;height:322px;transition:opacity .25s;z-index:10;
+  border-radius:14px;overflow:hidden;border:1px solid rgba(127,224,180,.22);
+  background:rgba(6,12,10,.94);box-shadow:0 22px 48px rgba(0,0,0,.6)}
+.term .bar2{height:38px;display:flex;align-items:center;gap:7px;padding:0 14px;
+  background:linear-gradient(180deg,#152420,#0E1A16);border-bottom:1px solid rgba(127,224,180,.14)}
+.term .bar2 em{width:9px;height:9px;border-radius:50%;background:#3A5148;font-style:normal}
+.term .bar2 em:nth-child(1){background:#FF6B5E}.term .bar2 em:nth-child(2){background:#FFBE5C}
+.term .bar2 em:nth-child(3){background:#4ADE80}
+.term .bar2 span{margin-left:8px;font-size:13px;color:#7E978A;letter-spacing:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term .body{height:284px;overflow:hidden;position:relative}
+#screen iframe{width:100%;height:100%;border:0;display:block}
+#screen img{width:100%;height:100%;object-fit:cover;display:block}
+.idle-term{padding:14px 16px;font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:1.95;color:#5E7A6E}
+.idle-term span{color:var(--mint)}
+.duelbox{padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;height:100%;overflow:hidden}
+.duelbox .m{max-width:92%;padding:7px 10px;border-radius:10px;line-height:1.5}
+.duelbox .m.l{background:rgba(127,224,180,.12);color:#D8EEE3;align-self:flex-start}
+.duelbox .m.r{background:rgba(255,180,84,.10);color:#F3DFC4;align-self:flex-end}
+
+/* 画框出现时隐藏终端 */
+#stage.has-art .term{opacity:0;pointer-events:none}
+
+/* 画作卡片 */
+.art{position:absolute;left:24px;top:18px;width:524px;z-index:14;display:none;
+  transform:rotate(-1.2deg);transform-origin:50% 100%}
+.art.on{display:block;animation:artIn .55s cubic-bezier(.2,.9,.3,1.25)}
+@keyframes artIn{from{opacity:0;transform:rotate(-2deg) translateY(24px) scale(.92)}
+                 to{opacity:1;transform:rotate(-2deg) translateY(0) scale(1)}}
+.art .ph{background:#FBFAF6;padding:11px 11px 0;border-radius:7px;
+  box-shadow:0 26px 52px rgba(0,0,0,.62)}
+.art .ph img{width:100%;height:512px;object-fit:cover;display:block;border-radius:2px;background:#0B1512}
+.art .ph .wait{width:100%;height:512px;border-radius:2px;background:
+  repeating-linear-gradient(45deg,#0E1A16,#0E1A16 14px,#12211B 14px,#12211B 28px);
+  display:grid;place-items:center;color:#7FE0B4;font-size:17px;letter-spacing:2px}
+.art .cap{background:#FBFAF6;padding:11px 14px 15px;border-radius:0 0 7px 7px;
+  color:#1E1A14;font-size:15px;line-height:1.4}
+.art .cap{font-size:17px}
+.art .cap b{color:#0E7A4E}
+
+/* 底部留白给官方评论浮层 */
+.footbar{position:absolute;left:0;right:0;bottom:0;height:330px;z-index:1;
+  background:linear-gradient(180deg,transparent,rgba(4,8,6,.55) 45%,rgba(4,8,6,.8))}
+</style></head><body>
+<main id="stage">
+
+  <div class="top">
+    <div class="brand"><img src="/assets/brand/logo.png" alt=""><b>talos</b><i>值班直播间</i></div>
+    <div class="tr">
+      <span class="pill">AI 生成内容</span>
+      <span class="pill" id="modePill">待机</span>
+      <span class="pill live"><em></em>直播中</span>
+      <span class="clock" id="uptime">00:00:00</span>
+    </div>
+  </div>
+
+  <section class="hud">
+    <div class="r1">
+      <div>
+        <div class="lab">今日互动</div>
+        <div class="big"><b id="goalNow">0</b><span>/ <span id="goalAll">300</span> 次</span></div>
+      </div>
+      <div class="st">
+        <span class="s on" id="s1">● 在直播</span>
+        <span class="s" id="s2">等弹幕</span>
+      </div>
+    </div>
+    <div class="bar"><i id="goalBar" style="width:0%"></i></div>
+    <div class="rule">弹幕说一句它回一句；说 <b>「画个…」</b><b>「来局游戏」</b> 它当场做给你看</div>
+    <div class="stats">
+      <div class="stat"><div class="k">TOKEN</div><div class="v" id="tokens">0</div></div>
+      <div class="stat amber"><div class="k">礼物</div><div class="v" id="gifts">0</div></div>
+      <div class="stat"><div class="k">关注</div><div class="v" id="follows">0</div></div>
+      <div class="stat"><div class="k">开心度</div><div class="v" id="mood">60</div></div>
+    </div>
+  </section>
+
+  <div class="talk" id="talk">
+    <div class="q" id="qline"></div>
+    <div class="a" id="aline"></div>
+  </div>
+
+  <div class="scene" id="scene">
+    <div class="wall"></div>
+    <div class="ground"></div>
+    <div class="aura" id="aura"></div>
+    <div class="host" id="host">
+      <div class="zoom"><div class="fig">
+        <img class="base" id="poseBase" src="/assets/poses/c_idle.png" alt="">
+        <img id="poseTop" src="/assets/poses/c_idle.png" alt="" style="opacity:0">
+      </div></div>
+    </div>
+
+    <div class="art" id="art">
+      <div class="ph"><div id="artBox"></div></div>
+      <div class="cap" id="artCap"></div>
+    </div>
+
+    <div class="term">
+      <div class="bar2"><em></em><em></em><em></em><span id="termTitle">talos · 待机中</span></div>
+      <div class="body" id="screen">
+        <div class="idle-term"><div>$ talos status</div><div>mode <span>idle</span> · 等弹幕</div><div>▍</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footbar"></div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const POSE = '/assets/poses/c_';
+const POSE_MAP = {idle:'idle', talk:'idle', think:'type', type:'type', happy:'happy', surprise:'happy'};
+let curPose = 'idle', lastSeq = 0, playing = false, audioQ = [], inited = false;
+let localIdle = 'idle', lastCycle = Date.now();
+
+function fit(){ $('#stage').style.transform = 'scale(' + Math.min(innerWidth/1080, innerHeight/1920) + ')'; }
+addEventListener('resize', fit); fit();
+
+function setPose(p){
+  p = POSE_MAP[p] || 'idle';
+  if (p === curPose) return;
+  const base = $('#poseBase'), top = $('#poseTop');
+  top.src = POSE + p + '.png'; top.style.opacity = '1';
+  setTimeout(()=>{ base.src = top.src; top.style.opacity = '0'; }, 190);
+  curPose = p;
+}
+const fmt = n => (n||0).toLocaleString('en-US');
+function hms(s){
+  const h=String(Math.floor(s/3600)).padStart(2,'0'),m=String(Math.floor(s%3600/60)).padStart(2,'0'),x=String(s%60).padStart(2,'0');
+  return h+':'+m+':'+x;
+}
+const MODE_CN = {idle:'待机', game:'做游戏', avatar:'画图', duel:'对聊'};
+
+function renderArt(a, mode){
+  const el = $('#art'), box = $('#artBox'), cap = $('#artCap');
+  const keep = (a.last === 'avatar' && a.img);
+  if (mode !== 'avatar' && !keep){
+    el.classList.remove('on');
+    document.getElementById('stage').classList.remove('has-art');
+    return;
+  }
+  const theme = a.theme || a.last_theme || '一张画';
+  if (a.img){
+    if (box.dataset.k !== a.img){
+      box.innerHTML = '<img src="'+a.img+'">'; box.dataset.k = a.img;
+    }
+    cap.innerHTML = '给 <b>@'+(a.who||'观众')+'</b> 画的 · '+theme;
+  } else {
+    if (box.dataset.k !== 'wait:'+theme){
+      box.innerHTML = '<div class="wait">正在画 · '+theme+'</div>'; box.dataset.k = 'wait:'+theme;
+    }
+    cap.innerHTML = '<b>@'+(a.who||'观众')+'</b> 点的题，马上好';
+  }
+  el.classList.add('on');
+  document.getElementById('stage').classList.add('has-art');
+}
+
+function renderScreen(a, mode){
+  const scr = $('#screen');
+  if (mode === 'game' && a.game){
+    if (scr.dataset.key !== 'g:'+a.game){
+      scr.innerHTML = '<iframe src="/games/'+a.game+'.html"></iframe>'; scr.dataset.key='g:'+a.game;
+    }
+  } else if (mode === 'avatar'){
+    const key = 'draw:' + (a.img ? 'done' : 'wait') + (a.theme||'');
+    if (scr.dataset.key !== key){
+      scr.innerHTML = '<div class="idle-term">'
+        + '<div>$ talos draw "' + (a.theme||'') + '"</div>'
+        + (a.img
+            ? '<div>状态 <span>完成</span> · 已展示在左侧画框</div><div>下一步 <span>等弹幕</span></div>'
+            : '<div>状态 <span>生成中</span> ■■■■□□□□</div><div>▍</div>')
+        + '</div>';
+      scr.dataset.key = key;
+    }
+  } else if (mode === 'duel'){
+    scr.innerHTML = '<div class="duelbox">' + (window.__chat||[]).map(m =>
+      '<div class="m '+(m.who==='rival'?'r':'l')+'"><b>'+m.name+'</b> '+m.text+'</div>').join('') + '</div>';
+    scr.dataset.key = 'd'+(window.__chat||[]).length;
+  } else {
+    if (scr.dataset.key !== 'idle'){
+      scr.innerHTML = '<div class="idle-term"><div>$ talos status</div><div>mode <span>idle</span> · 等弹幕</div><div>▍</div></div>';
+      scr.dataset.key='idle';
+    }
+  }
+}
+
+async function tick(){
+  try{
+    const st = await (await fetch('/api/state', {cache:'no-store'})).json();
+    window.__chat = st.chat || [];
+    if (st.layout){
+      const r = document.documentElement.style;
+      r.setProperty('--host-scale', st.layout.scale ?? 1);
+      r.setProperty('--host-x', (st.layout.x ?? 0) + 'px');
+      r.setProperty('--host-y', (st.layout.y ?? 0) + 'px');
+    }
+    if (!inited){ lastSeq = st.audio_seq || 0; inited = true; }
+
+    $('#uptime').textContent = hms(st.uptime);
+    if (st.pose === 'idle' && !st.speaking){
+      const nowMs = Date.now();
+      if (nowMs - lastCycle > 7000 + Math.random()*4000){
+        localIdle = (localIdle === 'idle') ? 'type' : 'idle';
+        lastCycle = nowMs;
+      }
+      setPose(localIdle);
+    } else {
+      localIdle = 'idle'; lastCycle = Date.now();
+      setPose(st.pose);
+    }
+    $('#scene').classList.toggle('speaking', !!st.speaking);
+
+    const m = st.metrics;
+    $('#tokens').textContent = fmt(m.tokens);
+    $('#gifts').textContent = m.gifts;
+    $('#follows').textContent = m.follows;
+    $('#mood').textContent = Math.round(m.mood);
+
+    const done = m.danmaku + m.gifts*2 + m.follows*3 + m.acts*5;
+    $('#goalNow').textContent = done;
+    $('#goalAll').textContent = st.goal.target;
+    $('#goalBar').style.width = Math.min(100, done/st.goal.target*100) + '%';
+
+    $('#modePill').textContent = MODE_CN[st.mode] || '待机';
+    $('#modePill').className = 'pill' + (st.mode==='idle' ? '' : ' live');
+    $('#s2').textContent = st.speaking ? '正在说话' : (st.mode==='idle' ? '等弹幕' : MODE_CN[st.mode]);
+    $('#s2').className = 's' + (st.speaking ? ' on' : '');
+
+    const a = st.activity || {};
+    $('#termTitle').textContent = 'talos · ' + (a.title || (st.mode==='idle' ? '待机中' : '运行中'));
+    renderScreen(a, st.mode);
+    renderArt(a, st.mode);
+
+    const cap = st.caption || {};
+    const fresh = cap.text && (Date.now()/1000 - cap.at) < 40;
+    const talk = $('#talk');
+    if (fresh){
+      talk.classList.remove('idle');
+      const q = $('#qline'), al = $('#aline');
+      if (cap.reply_to && cap.question){
+        q.innerHTML = '<b>@'+cap.reply_to+'</b>：'+cap.question;
+      } else {
+        q.innerHTML = '<b>Talos</b> 在说话';
+      }
+      al.innerHTML = (cap.reply_to ? '<u>→</u>' : '') + cap.text;
+    } else {
+      talk.classList.add('idle');
+      $('#qline').innerHTML = '<b>talos</b> 在等弹幕';
+      $('#aline').textContent = '发一句，它就会回你，会先叫你的名字';
+    }
+
+    pollAudio();
+  }catch(e){}
+  setTimeout(tick, 460);
+}
+async function pollAudio(){
+  if (playing) return;
+  try{
+    const r = await (await fetch('/api/audio?since='+lastSeq, {cache:'no-store'})).json();
+    if (r.items && r.items.length){ audioQ.push(...r.items); playNext(); }
+  }catch(e){}
+}
+function playNext(){
+  if (playing || !audioQ.length) return;
+  const it = audioQ.shift();
+  lastSeq = Math.max(lastSeq, it.seq);
+  const a = new Audio(it.url);
+  playing = true;
+  a.onended = a.onerror = () => { playing = false; setTimeout(playNext, 150); };
+  a.play().catch(()=>{ playing = false; });
+}
+tick();
+</script>
+</body></html>

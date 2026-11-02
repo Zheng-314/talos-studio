@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>Talos 直播控制台</title>
+<style>
+:root{
+  --bg:#080D0A; --panel:#0D1512; --panel2:#111C17; --line:rgba(127,224,180,.13);
+  --mint:#7FE0B4; --em:#19A26A; --amber:#FFB454; --dim:#6B7F76; --ink:#E6F2EC;
+  --red:#FF7A7A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC",sans-serif;overflow-x:hidden}
+a{color:var(--mint);text-decoration:none}
+.wrap{display:grid;grid-template-columns:212px minmax(0,1fr);min-height:100vh;max-width:1320px;margin:0 auto}
+
+/* 侧栏 */
+.side{background:#070B09;border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px 20px}
+.appicon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(150deg,#2FBC82,#0E7A4E);box-shadow:0 6px 16px rgba(14,122,78,.35)}
+.appicon .mark{width:26px;height:26px;color:#fff}
+.logo b{font:700 24px/1 "Segoe UI","PingFang SC","Microsoft YaHei";letter-spacing:-.4px;color:var(--ink)}
+.logo i{display:block;font-style:normal;color:var(--dim);font-size:12px;letter-spacing:1.5px;margin-top:6px}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{all:unset;cursor:pointer;padding:11px 14px;border-radius:10px;color:#9DB3A8;font-size:14px;
+  display:flex;align-items:center;gap:9px;transition:.15s}
+.nav button:hover{background:rgba(127,224,180,.06);color:var(--ink)}
+.nav button.on{background:rgba(25,162,106,.14);color:var(--mint);box-shadow:inset 2px 0 0 var(--em)}
+.nav .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+.side .foot{position:absolute;bottom:18px;left:14px;right:14px;font-size:11px;color:#3E5349;line-height:1.7}
+
+/* 主区 */
+main{padding:26px 30px 60px;min-width:0;overflow:hidden}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.head h1{margin:0;font-size:22px;font-weight:600;letter-spacing:1px}
+.head .sub{color:var(--dim);font-size:13px;margin-top:5px}
+.head .right{display:flex;align-items:center;gap:14px}
+.pill{padding:7px 14px;border-radius:999px;font-size:13px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.pill.live{background:rgba(25,162,106,.12);border-color:rgba(25,162,106,.4);color:var(--mint)}
+.pill.demo{background:rgba(255,180,84,.10);border-color:rgba(255,180,84,.35);color:var(--amber)}
+
+.btn{all:unset;cursor:pointer;padding:9px 16px;white-space:nowrap;border-radius:9px;font-size:13px;
+  background:rgba(25,162,106,.16);border:1px solid rgba(25,162,106,.38);color:var(--mint);transition:.15s}
+.btn:hover{background:rgba(25,162,106,.26)}
+.btn.ghost{background:transparent;border-color:var(--line);color:#9DB3A8}
+.btn.ghost:hover{color:var(--ink);border-color:rgba(127,224,180,.3)}
+.btn.warn{border-color:rgba(255,122,122,.35);color:var(--red);background:rgba(255,122,122,.08)}
+.btn:disabled{opacity:.4;cursor:default}
+
+.grid{display:grid;gap:14px}
+.g6{display:flex;flex-wrap:wrap;gap:12px}
+.g6>*{flex:1 1 148px;min-width:148px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.g2{grid-template-columns:1fr 1fr}
+.card{background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:14px;padding:14px 16px}
+.card h3{margin:0 0 12px;font-size:13px;font-weight:500;color:var(--dim);letter-spacing:1px;white-space:nowrap}
+.kpi .v{font:600 26px/1 ui-monospace,Consolas,monospace;letter-spacing:-.5px;white-space:nowrap}
+.kpi .l{margin-top:7px;font-size:12px;color:var(--dim)}
+.kpi .d{margin-top:6px;font-size:11px;color:#40564B}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid rgba(127,224,180,.08)}
+th{color:var(--dim);font-weight:500;font-size:12px}
+td.mono,.mono{font-family:ui-monospace,Consolas,monospace}
+input[type=text],input[type=number],textarea,select{
+  width:100%;background:#070C0A;border:1px solid var(--line);border-radius:9px;
+  color:var(--ink);padding:10px 12px;font-size:13px;font-family:inherit;outline:none}
+input:focus,textarea:focus,select:focus{border-color:rgba(127,224,180,.45)}
+textarea{line-height:1.6;resize:vertical}
+label{display:block;font-size:12px;color:var(--dim);margin:12px 0 6px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.poses{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.pose{background:#070C0A;border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:.15s}
+.pose:hover{border-color:rgba(127,224,180,.4)}
+.pose.on{border-color:var(--em);box-shadow:0 0 0 1px var(--em),0 8px 22px rgba(25,162,106,.18)}
+.pose img{width:100%;height:190px;object-fit:contain;object-position:center top;display:block;background:#0A120F}
+.pose .n{padding:8px;font-size:12px;text-align:center;color:#9DB3A8}
+.pose.on .n{color:var(--mint)}
+.tag{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;
+  background:rgba(127,224,180,.10);color:var(--mint);border:1px solid rgba(127,224,180,.2)}
+.tag.amber{background:rgba(255,180,84,.10);color:var(--amber);border-color:rgba(255,180,84,.25)}
+.scroll{max-height:300px;overflow:auto}
+.scroll::-webkit-scrollbar{width:6px}
+.scroll::-webkit-scrollbar-thumb{background:rgba(127,224,180,.15);border-radius:3px}
+.logrow{display:flex;gap:12px;font-size:12.5px;line-height:1.9;font-family:ui-monospace,Consolas,monospace;color:#6E857A}
+.logrow span{color:#33463C;flex:0 0 68px}
+.notice{position:fixed;right:24px;bottom:24px;padding:12px 18px;border-radius:10px;
+  background:rgba(25,162,106,.16);border:1px solid rgba(25,162,106,.4);color:var(--mint);
+  font-size:13px;opacity:0;transform:translateY(8px);transition:.25s;pointer-events:none}
+.notice.on{opacity:1;transform:none}
+.hint{font-size:12px;color:#4B6157;line-height:1.7;margin-top:10px}
+body.embed .side{display:none}
+body.embed .wrap{grid-template-columns:minmax(0,1fr);max-width:none}
+body.embed main{padding:20px 24px 40px}
+body.embed .head{margin-bottom:16px}
+</style></head><body>
+<div class="wrap">
+  <aside class="side">
+    <div class="logo"><span class="appicon"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="4.6" fill="currentColor"/><path d="M 32.00 25.00 L 32.61 24.89 L 33.23 24.84 L 33.87 24.84 L 34.52 24.91 L 35.17 25.03 L 35.82 25.21 L 36.45 25.45 L 37.08 25.75 L 37.69 26.11 L 38.27 26.53 L 38.82 27.00 L 39.33 27.53 L 39.80 28.11 L 40.23 28.74 L 40.60 29.42 L 40.92 30.13 L 41.18 30.88 L 41.37 31.66 L 41.50 32.47 L 41.56 33.29 L 41.54 34.13 L 41.45 34.98 L 41.28 35.82 L 41.04 36.66 L 40.72 37.48 L 40.33 38.28 L 39.86 39.06 L 39.32 39.80 L 38.72 40.50 L 38.04 41.15 L 37.30 41.75 L 36.51 42.28 L 35.66 42.76 L 34.76 43.16 L 33.82 43.48 L 32.84 43.73 L 31.84 43.89 L 30.81 43.96 L 29.78 43.95 L 28.73 43.84 L 27.69 43.65 L 26.66 43.36 L 25.64 42.97 L 24.66 42.50 L 23.70 41.94 L 22.79 41.29 L 21.94 40.56 L 21.14 39.75 L 20.40 38.86 L 19.74 37.90 L 19.16 36.89 L 18.66 35.81 L 18.26 34.69 L 17.95 33.52 L 17.74 32.32 L 17.63 31.10 L 17.63 29.86 L 17.73 28.61 L 17.95 27.36 L 18.27 26.13 L 18.71 24.92 L 19.25 23.74 L 19.89 22.61 L 20.64 21.52 L 21.48 20.49 L 22.42 19.53 L 23.45 18.65 L 24.55 17.86 L 25.73 17.15 L 26.98 16.55 L 28.28 16.05 L 29.64 15.66 L 31.03 15.38 L 32.45 15.23 L 33.89 15.20 L 35.34 15.29 L 36.79 15.51 L 38.23 15.85 L 39.64 16.32 L 41.01 16.92 L 42.34 17.63 L 43.61 18.46 L 44.82 19.41 L 45.95 20.46 L 46.99 21.62 L 47.93 22.87 L 48.77 24.20 L 49.50 25.61 L 50.11 27.09 L 50.59 28.63 L 50.94 30.21 L 51.16 31.83 L 51.23 33.47 L 51.17 35.12 L 50.96 36.78 L 50.61 38.42 L 50.12 40.03 L 49.48 41.61 L 48.71 43.14 L 47.80 44.60 L 46.77 45.99 L 45.61 47.30 L 44.34 48.51 L 42.96 49.61 L 41.48 50.60 L 39.91 51.46 L 38.26 52.19 L 36.55 52.78 L 34.78 53.22 L 32.97 53.51 L 31.13 53.65 L 29.27 53.63 L 27.41 53.45 L 25.56 53.10 L 23.74 52.60 L 21.95 51.94 L 20.22 51.12 L 18.56 50.16 L 16.97 49.05 L 15.48 47.80 L 14.09 46.41 L 12.82 44.91 L 11.67 43.29 L 10.66 41.58 L 9.80 39.77 L 9.09 37.88 L 8.54 35.93 L 8.16 33.93 L 7.95 31.89 L 7.92 29.83 L 8.06 27.77 L 8.38 25.71 L 8.88 23.68 L 9.55 21.68 L 10.40 19.74 L 11.41 17.87 L 12.59 16.09 L 13.92 14.40 L 15.40 12.82 L 17.01 11.37" fill="none" stroke="currentColor" stroke-width="6.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><b>talos</b><i>直播控制台</i></div></div>
+    <nav class="nav" id="nav">
+      <button data-tab="overview" class="on"><i class="dot"></i>总览</button>
+      <button data-tab="persona"><i class="dot"></i>人设</button>
+      <button data-tab="acts"><i class="dot"></i>活动</button>
+      <button data-tab="look"><i class="dot"></i>形象</button>
+      <button data-tab="data"><i class="dot"></i>数据</button>
+      <button data-tab="settings"><i class="dot"></i>设置</button>
+    </nav>
+    <div class="foot">本地后台 · 只监听 127.0.0.1<br>改动即时生效，不用重启</div>
+  </aside>
+
+  <main>
+    <div class="head">
+      <div>
+        <h1 id="pageTitle">总览</h1>
+        <div class="sub" id="pageSub">这个页面在管直播间的一切</div>
+      </div>
+      <div class="right">
+        <span class="pill" id="modePill">待机</span>
+        <span class="pill" id="upPill">00:00:00</span>
+        <a class="btn ghost" href="/" target="_blank">打开直播画面 ↗</a>
+      </div>
+    </div>
+
+    <!-- 总览 -->
+    <section id="tab-overview">
+      <div class="grid g6" style="margin-bottom:14px">
+        <div class="card kpi"><h3>已播</h3><div class="v" id="k-uptime">0:00</div><div class="l">时长</div></div>
+        <div class="card kpi"><h3>Token</h3><div class="v" id="k-tokens">0</div><div class="l">真实用量</div></div>
+        <div class="card kpi"><h3>弹幕</h3><div class="v" id="k-danmaku">0</div><div class="l">互动次数</div></div>
+        <div class="card kpi"><h3>礼物</h3><div class="v" id="k-gifts">0</div><div class="l">件</div></div>
+        <div class="card kpi"><h3>关注</h3><div class="v" id="k-follows">0</div><div class="l">人</div></div>
+        <div class="card kpi"><h3>开心度</h3><div class="v" id="k-mood">60</div><div class="l">0–100</div></div>
+      </div>
+
+      <div class="grid g2" style="margin-bottom:14px">
+        <div class="card">
+          <h3>现在在干什么</h3>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <span class="tag" id="nowMode">待机</span>
+            <span style="font-size:16px" id="nowAct">等弹幕</span>
+          </div>
+          <div style="font-size:13px;color:var(--dim);min-height:40px;line-height:1.7" id="nowCaption">—</div>
+          <div class="hint" id="nowPose">姿态：idle</div>
+        </div>
+        <div class="card">
+          <h3>让它说一句</h3>
+          <textarea id="sayText" rows="3" placeholder="输入它要说的话，回车旁的按钮直接播"></textarea>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" onclick="doSay()">说这句</button>
+            <button class="btn ghost" onclick="doAct('game')">做游戏</button>
+            <button class="btn ghost" onclick="doAct('avatar')">画头像</button>
+            <button class="btn ghost" onclick="doAct('duel')">双AI对聊</button>
+            <button class="btn warn" onclick="doIdle()">切回待机</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <h3>模拟一条弹幕（本地彩排用）</h3>
+        <div class="grid g4" style="align-items:end">
+          <div><label>昵称</label><input type="text" id="sim-who" value="小鱼"></div>
+          <div style="grid-column:span 2"><label>内容</label><input type="text" id="sim-text" placeholder="这个是真人吗"></div>
+          <div><label>&nbsp;</label><button class="btn" onclick="doSim()">发一条</button></div>
+        </div>
+        <div class="hint">它会把这条当成真的弹幕处理：先叫名字，再回答，同时出声、上字幕。不会发到抖音。</div>
+      </div>
+
+      <div class="card">
+        <h3>工作日志</h3>
+        <div class="scroll" id="logBox"></div>
+      </div>
+    </section>
+
+    <!-- 人设 -->
+    <section id="tab-persona" hidden>
+      <div class="grid">
+        <div class="card">
+          <h3>Talos · 主播人设</h3>
+          <textarea id="p-talos" rows="7"></textarea>
+          <div class="hint">这段会作为 system prompt 每次传给模型。写说话规则、身份、边界。改完点保存，下一句生效。</div>
+        </div>
+        <div class="grid g2">
+          <div class="card"><h3>阿刺 · 对聊对手</h3><textarea id="p-rival" rows="5"></textarea></div>
+          <div class="card"><h3>路人 · 第三个角色</h3><textarea id="p-guest" rows="5"></textarea></div>
+        </div>
+        <div class="row"><button class="btn" onclick="savePersona()">保存人设</button>
+          <span class="hint" style="margin:0">保存后写进 config.json</span></div>
+      </div>
+    </section>
+
+    <!-- 活动 -->
+    <section id="tab-acts" hidden>
+      <div class="grid g3" style="margin-bottom:14px">
+        <div class="card">
+          <h3>小游戏</h3>
+          <p style="font-size:13px;color:#9DB3A8;line-height:1.7;margin:0 0 12px">
+            显示器里跑真游戏，三个模板轮着来：贪吃蛇用 BFS 自己找路、打砖块自动挡板、反应力测试机器手在打。</p>
+          <button class="btn" onclick="doAct('game')">立即开始</button>
+        </div>
+        <div class="card">
+          <h3>AI 头像</h3>
+          <p style="font-size:13px;color:#9DB3A8;line-height:1.7;margin:0 0 12px">
+            中文题目先翻成英文提示词，再调画图接口，出图落到 web/gallery。两次之间至少隔 45 秒。</p>
+          <button class="btn" onclick="doAct('avatar')">立即开始</button>
+        </div>
+        <div class="card">
+          <h3>双 AI 对聊</h3>
+          <p style="font-size:13px;color:#9DB3A8;line-height:1.7;margin:0 0 12px">
+            它和「阿刺」互怼六轮，两个音色交替，话题可以从弹幕里点。</p>
+          <button class="btn" onclick="doAct('duel')">立即开始</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>自动找事做</h3>
+        <div class="grid g3">
+          <div><label>开关</label>
+            <select id="a-auto"><option value="1">开</option><option value="0">关</option></select></div>
+          <div><label>空场多少秒后自己开工</label>
+            <input type="number" id="a-idle" min="10" max="300" step="1"></div>
+          <div><label>&nbsp;</label><button class="btn" onclick="saveAuto()">保存</button></div>
+        </div>
+        <div class="hint">关掉以后，没人说话它就安静待着，只回弹幕。想手动控节奏就关掉。</div>
+      </div>
+    </section>
+
+    <!-- 形象 -->
+    <section id="tab-look" hidden>
+      <div class="card" style="margin-bottom:14px">
+        <h3>姿态库 · 点一下立刻切换</h3>
+        <div class="poses" id="poseGrid"></div>
+        <div class="hint">五张同构图，1136×1900 透明底。程序按状态自动切：说话 talk、收礼物 surprise、出图成功 happy、画图 think、其余 idle。</div>
+      </div>
+      <div class="card">
+        <h3>替换某一张</h3>
+        <div class="grid g3">
+          <div><label>替换哪个姿态</label><select id="u-name"></select></div>
+          <div><label>选一张 PNG（同名会覆盖）</label><input type="file" id="u-file" accept="image/png"></div>
+          <div><label>&nbsp;</label><button class="btn" onclick="doUpload()">上传替换</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 数据 -->
+    <section id="tab-data" hidden>
+      <div class="grid g4" style="margin-bottom:14px">
+        <div class="card kpi"><h3>完成活动</h3><div class="v" id="k-acts">0</div><div class="l">次</div></div>
+        <div class="card kpi"><h3>平均每次回复</h3><div class="v" id="k-avg">0</div><div class="l">tokens</div></div>
+        <div class="card kpi"><h3>开销估算</h3><div class="v" id="k-cost">0</div><div class="l">元（按 1 元/百万）</div></div>
+        <div class="card kpi"><h3>目标进度</h3><div class="v" id="k-goal">0%</div><div class="l" id="k-goalTxt">—</div></div>
+      </div>
+      <div class="grid g2">
+        <div class="card"><h3>最近模型调用</h3><div class="scroll" id="callBox"></div></div>
+        <div class="card"><h3>最近弹幕</h3><div class="scroll" id="bubbleBox"></div></div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section id="tab-settings" hidden>
+      <div class="grid g2">
+        <div class="card">
+          <h3>目标</h3>
+          <label>目标名字</label><input type="text" id="s-goalName">
+          <label>目标数值</label><input type="number" id="s-goalTarget" min="1">
+        </div>
+        <div class="card">
+          <h3>模型</h3>
+          <label>接口地址</label><input type="text" id="s-api">
+          <label>模型名</label><input type="text" id="s-model">
+          <div class="row" style="margin-top:12px">
+            <div style="flex:1"><label>单次最大 tokens</label><input type="number" id="s-max"></div>
+            <div style="flex:1"><label>温度</label><input type="number" id="s-temp" step="0.05" min="0" max="2"></div>
+          </div>
+          <div class="hint">Key 存在 config.json 里，这个页面不回显，也不会传出去。</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>图像引擎</h3>
+        <div class="grid g3">
+          <div><label>用哪家</label>
+            <select id="s-img">
+              <option value="svg">纯代码 SVG（推荐，秒出、无额度）</option>
+              <option value="pollinations">pollinations（免费，额度有限）</option>
+              <option value="siliconflow">硅基流动（稳定，需 Key）</option>
+            </select></div>
+          <div><label>硅基流动 API Key</label><input type="text" id="s-sfkey" placeholder="sk-..."></div>
+          <div><label>模型</label>
+            <select id="s-sfmodel">
+              <option value="Kwai-Kolors/Kolors">Kolors（中文理解好）</option>
+              <option value="black-forest-labs/FLUX.1-schnell">FLUX.1 schnell（快）</option>
+              <option value="stabilityai/stable-diffusion-3-5-large">SD3.5 Large</option>
+            </select></div>
+        </div>
+        <div class="hint">填了 Key 并选硅基流动，出图就走它；失败会自动退回免费接口。注册地址 siliconflow.cn，新号有免费额度。</div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>语音引擎</h3>
+        <div class="grid g3">
+          <div><label>用哪家</label>
+            <select id="s-tts">
+              <option value="edge">edge-tts（免费，机械）</option>
+              <option value="fish">Fish Audio（自然，可克隆）</option>
+            </select></div>
+          <div><label>Fish API Key</label><input type="text" id="s-fishkey" placeholder="留空则不启用"></div>
+          <div><label>Fish 音色 ID（可留空）</label><input type="text" id="s-fishref" placeholder="reference_id"></div>
+        </div>
+        <div class="hint">Fish Audio 用 s2.1-pro-free 模型，有免费额度。填了 Key 并选 Fish，Talos 的声音就走它；失败会自动退回 edge-tts。</div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>声音</h3>
+        <div class="grid g3">
+          <div><label>Talos</label><select id="s-v-talos" class="voice"><option value="zh-CN-XiaoyiNeural">晓伊 · 活泼女声</option><option value="zh-CN-XiaoxiaoNeural">晓晓 · 自然女声</option><option value="zh-CN-XiaohanNeural">晓涵 · 温柔女声</option><option value="zh-CN-XiaomoNeural">晓墨 · 沉稳女声</option><option value="zh-CN-YunxiNeural">云希 · 阳光男声</option><option value="zh-CN-YunjianNeural">云健 · 硬朗男声</option><option value="zh-CN-YunyangNeural">云扬 · 播报男声</option></select></div>
+          <div><label>阿刺</label><select id="s-v-rival" class="voice"><option value="zh-CN-XiaoyiNeural">晓伊 · 活泼女声</option><option value="zh-CN-XiaoxiaoNeural">晓晓 · 自然女声</option><option value="zh-CN-XiaohanNeural">晓涵 · 温柔女声</option><option value="zh-CN-XiaomoNeural">晓墨 · 沉稳女声</option><option value="zh-CN-YunxiNeural">云希 · 阳光男声</option><option value="zh-CN-YunjianNeural">云健 · 硬朗男声</option><option value="zh-CN-YunyangNeural">云扬 · 播报男声</option></select></div>
+          <div><label>路人</label><select id="s-v-guest" class="voice"><option value="zh-CN-XiaoyiNeural">晓伊 · 活泼女声</option><option value="zh-CN-XiaoxiaoNeural">晓晓 · 自然女声</option><option value="zh-CN-XiaohanNeural">晓涵 · 温柔女声</option><option value="zh-CN-XiaomoNeural">晓墨 · 沉稳女声</option><option value="zh-CN-YunxiNeural">云希 · 阳光男声</option><option value="zh-CN-YunjianNeural">云健 · 硬朗男声</option><option value="zh-CN-YunyangNeural">云扬 · 播报男声</option></select></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="btn" onclick="saveSettings()">保存设置</button></div>
+    </section>
+  </main>
+</div>
+
+<div class="notice" id="notice">已保存</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const VOICES = [
+  ["zh-CN-XiaoyiNeural","晓伊 · 活泼女声"],["zh-CN-XiaoxiaoNeural","晓晓 · 自然女声"],
+  ["zh-CN-XiaohanNeural","晓涵 · 温柔女声"],["zh-CN-XiaomoNeural","晓墨 · 沉稳女声"],
+  ["zh-CN-YunxiNeural","云希 · 阳光男声"],["zh-CN-YunjianNeural","云健 · 硬朗男声"],
+  ["zh-CN-YunyangNeural","云扬 · 播报男声"],
+];
+const MODE_CN = {idle:"待机", game:"做游戏", avatar:"画图", duel:"双聊"};
+let S = null, curTab = "overview";
+
+function toast(msg){ const n=$("#notice"); n.textContent=msg; n.classList.add("on");
+  clearTimeout(n._t); n._t=setTimeout(()=>n.classList.remove("on"), 1600); }
+function hms(v){ const h=String(Math.floor(v/3600)).padStart(2,"0"),m=String(Math.floor(v%3600/60)).padStart(2,"0"),s=String(v%60).padStart(2,"0"); return h+":"+m+":"+s; }
+function fmt(n){ return (n||0).toLocaleString("en-US"); }
+
+document.querySelectorAll("#nav button").forEach(b=>{
+  b.onclick = () => {
+    curTab = b.dataset.tab;
+    document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on", x===b));
+    ["overview","persona","acts","look","data","settings"].forEach(t=>
+      $("#tab-"+t).hidden = t!==curTab);
+    const titles={overview:["总览","一眼看清它在干什么"],persona:["人设","改它说话的方式"],
+      acts:["活动","三个活动的手动开关和自动节奏"],look:["形象","五套姿态和替换"],
+      data:["数据","用量、调用记录和弹幕"],settings:["设置","目标、模型、声音"]};
+    $("#pageTitle").textContent = titles[curTab][0];
+    $("#pageSub").textContent = titles[curTab][1];
+    render();
+  };
+});
+
+async function pull(){
+  try{
+    const r = await fetch("/api/admin/state", {cache:"no-store"});
+    S = await r.json();
+    render();
+  }catch(e){}
+  setTimeout(pull, 1400);
+}
+
+function render(){
+  if(!S) return;
+  const st = S.stream, m = st.metrics, a = st.activity||{};
+  $("#modePill").textContent = MODE_CN[st.mode]||st.mode;
+  $("#modePill").className = "pill " + (st.mode==="idle"?"":"live");
+  $("#upPill").textContent = hms(st.uptime);
+  $("#k-uptime").textContent = Math.floor(st.uptime/60)+":"+String(st.uptime%60).padStart(2,"0");
+  $("#k-tokens").textContent = fmt(m.tokens);
+  $("#k-danmaku").textContent = m.danmaku;
+  $("#k-gifts").textContent = m.gifts;
+  $("#k-follows").textContent = m.follows;
+  $("#k-mood").textContent = Math.round(m.mood);
+  $("#nowMode").textContent = MODE_CN[st.mode]||st.mode;
+  $("#nowAct").textContent = a.title || (st.mode==="idle"?"等弹幕":"运行中");
+  $("#nowCaption").textContent = (st.caption&&st.caption.text) ? "正在说：" + st.caption.text : "还没开口";
+  $("#nowPose").textContent = "姿态：" + st.pose + (st.speaking?" · 说话中":"");
+  $("#logBox").innerHTML = (S.log_all||[]).slice().reverse()
+    .map(l=>'<div class="logrow"><span>'+l.t+'</span>'+l.text+'</div>').join("");
+
+  if(curTab==="persona" && !$("#p-talos").dataset.touched){
+    $("#p-talos").value = S.config.persona.talos;
+    $("#p-rival").value = S.config.persona.rival;
+    $("#p-guest").value = S.config.persona.guest;
+  }
+  if(curTab==="acts" && !$("#a-idle").dataset.touched){
+    $("#a-idle").value = S.config.idle_seconds ?? 38;
+    $("#a-auto").value = (S.config.auto_act===false)?"0":"1";
+  }
+  if(curTab==="look"){
+    const g = $("#poseGrid");
+    if(g.dataset.n !== String(S.poses.length) || g.dataset.p !== S.poses.join()){
+      g.dataset.n = S.poses.length; g.dataset.p = S.poses.join();
+      g.innerHTML = S.poses.map(p=>'<div class="pose '+(st.pose===p?'on':'')+'" data-p="'+p+'">'
+        +'<img src="/assets/poses/c_'+p+'.png"><div class="n">'+p+'</div></div>').join("");
+      g.querySelectorAll(".pose").forEach(el=>{ el.onclick = () => setPose(el.dataset.p); });
+      $("#u-name").innerHTML = S.poses.map(p=>'<option>'+p+'</option>').join("");
+    } else {
+      g.querySelectorAll(".pose").forEach(el=>el.classList.toggle("on", el.dataset.p===st.pose));
+    }
+  }
+  if(curTab==="data"){
+    const calls = S.calls||[];
+    $("#k-acts").textContent = m.acts;
+    $("#k-avg").textContent = calls.length ? Math.round(m.tokens/Math.max(1,calls.length)) : 0;
+    $("#k-cost").textContent = (m.tokens/1e6).toFixed(2);
+    const done = m.danmaku + m.gifts*2 + m.follows*3 + m.acts*5;
+    const tgt = st.goal.target||1;
+    $("#k-goal").textContent = Math.min(100, Math.round(done/tgt*100)) + "%";
+    $("#k-goalTxt").textContent = done + " / " + tgt + " " + (st.goal.unit||"");
+    $("#callBox").innerHTML = calls.slice().reverse().map(c=>
+      '<div class="logrow"><span>'+c.t+'</span>'+c.tokens+' tok · '+(c.tag||"-")+' · '+c.q+'</div>').join("")
+      || '<div class="hint">还没有调用</div>';
+    $("#bubbleBox").innerHTML = (st.bubbles||[]).slice().reverse().map(b=>
+      '<div class="logrow"><span>'+b.who+'</span>'+b.text+'</div>').join("")
+      || '<div class="hint">还没有弹幕</div>';
+  }
+  if(curTab==="settings" && !$("#s-api").dataset.touched){
+    const b = S.config.brain;
+    $("#s-goalName").value = st.goal.name||"";
+    $("#s-goalTarget").value = st.goal.target||200;
+    $("#s-api").value = b.api; $("#s-model").value = b.model;
+    $("#s-max").value = b.max_tokens; $("#s-temp").value = b.temperature;
+
+    if (S.config.images){
+      $("#s-img").value = S.config.images.provider || "pollinations";
+      $("#s-sfkey").value = S.config.images.siliconflow_api_key === "***" ? "" : (S.config.images.siliconflow_api_key||"");
+      $("#s-sfmodel").value = S.config.images.siliconflow_model || "Kwai-Kolors/Kolors";
+    }
+    if (S.config.tts){
+      $("#s-tts").value = S.config.tts.provider || "edge";
+      $("#s-fishkey").value = S.config.tts.fish_api_key === "***" ? "" : (S.config.tts.fish_api_key||"");
+      $("#s-fishref").value = S.config.tts.fish_reference_id || "";
+    }
+    $("#s-v-talos").value = S.config.voices.talos;
+    $("#s-v-rival").value = S.config.voices.rival;
+    $("#s-v-guest").value = S.config.voices.guest;
+  }
+}
+
+async function post(url, body){
+  const r = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(body||{})});
+  return r.json().catch(()=>({}));
+}
+
+function doSay(){
+  const t = $("#sayText").value.trim(); if(!t) return;
+  post("/api/admin/say", {text:t}); $("#sayText").value=""; toast("已发送");
+}
+function doSim(){
+  const who = $("#sim-who").value.trim() || "小鱼";
+  const text = $("#sim-text").value.trim();
+  if(!text) return toast("先写一句弹幕");
+  post("/api/admin/comment", {who, text}); toast("已模拟：" + who);
+  $("#sim-text").value = "";
+}
+function doAct(k){
+  if(k==="duel" && S && S.config.activities && S.config.activities.duel===false){
+    return toast("双 AI 对聊已关闭");
+  }
+  post("/api/admin/act", {kind:k}); toast("已触发："+k);
+}
+function doIdle(){ post("/api/admin/idle"); toast("已切回待机"); }
+function setPose(p){ post("/api/admin/pose", {pose:p}); toast("姿态 → "+p); }
+function savePersona(){
+  post("/api/admin/config", {persona:{
+    talos:$("#p-talos").value, rival:$("#p-rival").value, guest:$("#p-guest").value}})
+    .then(()=>toast("人设已保存"));
+  $("#p-talos").dataset.touched = "1";
+}
+function saveAuto(){
+  post("/api/admin/config", {idle_seconds:Number($("#a-idle").value), auto_act:$("#a-auto").value==="1"})
+    .then(()=>toast("节奏已保存"));
+}
+function saveSettings(){
+  post("/api/admin/config", {
+    goal:{name:$("#s-goalName").value, target:Number($("#s-goalTarget").value), unit:"次互动"},
+    brain:{api:$("#s-api").value, model:$("#s-model").value,
+           max_tokens:Number($("#s-max").value), temperature:Number($("#s-temp").value),
+           api_key:"***"},
+    voices:{talos:$("#s-v-talos").value, rival:$("#s-v-rival").value, guest:$("#s-v-guest").value},
+    images:{provider:$("#s-img").value, siliconflow_model:$("#s-sfmodel").value,
+            siliconflow_api_key: ($("#s-sfkey").value || "***"), size:1024},
+    tts:{provider:$("#s-tts").value, fish_model:"s2.1-pro-free",
+         fish_api_key: ($("#s-fishkey").value || "***"),
+         fish_reference_id: $("#s-fishref").value, fish_speed:1.0},
+  }).then(()=>toast("设置已保存"));
+  $("#s-api").dataset.touched = "1";
+}
+async function doUpload(){
+  const f = $("#u-file").files[0]; if(!f) return toast("先选一张 PNG");
+  const fd = new FormData(); fd.append("name", $("#u-name").value); fd.append("file", f);
+  const r = await fetch("/api/admin/upload", {method:"POST", body:fd});
+  const d = await r.json();
+  if(d.ok){ toast("已替换："+d.pose); location.reload(); } else toast("上传失败");
+}
+
+document.querySelectorAll("input,textarea").forEach(el=>{
+  el.addEventListener("input", ()=>{ el.dataset.touched = "1"; });
+});
+if(location.hash){
+  const b=document.querySelector('[data-tab="'+location.hash.slice(1)+'"]');
+  if(b) b.click();
+}
+pull();
+if (location.search.indexOf("embed=1") >= 0) document.body.classList.add("embed");
+</script>
+</body></html>
