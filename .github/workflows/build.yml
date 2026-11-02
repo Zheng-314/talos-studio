@@ -1,0 +1,47 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build .app
+        run: |
+          bash build_mac.sh
+      - name: Pack
+        run: |
+          cd dist && ditto -c -k --sequesterRsrc --keepParent "Talos Studio.app" "Talos-Studio-mac.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Talos-Studio-mac
+          path: dist/Talos-Studio-mac.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller fastapi uvicorn python-multipart pillow numpy requests edge-tts websockets
+      - name: Build Inno Setup
+        run: |
+          choco install innosetup -y
+          python -c "from PIL import Image; Image.open('build/character_256.png').save('static/character.ico', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\talos.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Talos-Studio-windows
+          path: dist/Talos-Studio-Setup.exe
